@@ -1,26 +1,137 @@
 @import "tailwindcss";
 
+/* =========================
+   🎨 DESIGN TOKENS
+========================= */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Fonts */
+  --font-sans: "Inter", "Poppins", system-ui, sans-serif;
+  --font-mono: "Roboto Mono", monospace;
+
+  /* Radius */
+  --radius: 0.75rem;
+
+  /* Core Colors (HSL for Tailwind v4) */
+  --background: 0 0% 100%;
+  --foreground: 222 47% 11%;
+
+  --primary: 24 95% 53%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 210 40% 96%;
+  --secondary-foreground: 222 47% 11%;
+
+  --muted: 210 40% 96%;
+  --muted-foreground: 215 16% 47%;
+
+  --border: 214 32% 91%;
+
+  /* Status */
+  --success: 142 71% 45%;
+  --danger: 0 84% 60%;
+  --warning: 45 93% 47%;
+  --info: 217 91% 60%;
 }
+
+/* =========================
+   🌙 DARK MODE (class-based)
+========================= */
+
+.dark {
+  --background: 222 47% 11%;
+  --foreground: 210 40% 98%;
+
+  --secondary: 217 33% 17%;
+  --secondary-foreground: 210 40% 98%;
+
+  --muted: 217 33% 17%;
+  --muted-foreground: 215 20% 65%;
+
+  --border: 217 33% 17%;
+}
+
+/* =========================
+   🎯 THEME MAPPING (Tailwind v4)
+========================= */
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+
+  --color-border: hsl(var(--border));
+
+  --color-success: hsl(var(--success));
+  --color-danger: hsl(var(--danger));
+  --color-warning: hsl(var(--warning));
+  --color-info: hsl(var(--info));
+
+  --radius: var(--radius);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* =========================
+   🔧 BASE STYLES
+========================= */
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  html, body {
+    background: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    min-height: 100vh;
+  }
+
+  /* Typography */
+  h1 { font-size: 1.875rem; font-weight: 600; }
+  h2 { font-size: 1.5rem; font-weight: 600; }
+  h3 { font-size: 1.25rem; font-weight: 600; }
+  h4 { font-size: 1.125rem; font-weight: 500; }
+
+  p {
+    color: var(--color-muted-foreground);
+    font-size: 0.875rem;
+  }
+
+  a {
+    color: var(--color-primary);
+    transition: opacity 0.2s ease;
+  }
+
+  a:hover {
+    opacity: 0.8;
+  }
+
+  button {
+    transition: all 0.2s ease;
+    cursor: pointer;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* =========================
+   🧩 UTILITIES
+========================= */
+
+@layer utilities {
+  .text-success { color: var(--color-success); }
+  .text-danger { color: var(--color-danger); }
+  .text-warning { color: var(--color-warning); }
+  .text-info { color: var(--color-info); }
 }
