@@ -9,7 +9,7 @@ export default defineConfig({
   },
 
   datasource: {
-    url: process.env.DATABASE_URL,
-    shadowDatabaseUrl: env("DIRECT_URL")
+    url: env("DATABASE_URL"),
+    shadowDatabaseUrl: env("DIRECT_URL")  // For migrations
   },
-});``
+});
