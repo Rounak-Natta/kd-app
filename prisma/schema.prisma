@@ -1,16 +1,751 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["relationJoins", "extendedWhereUnique"]
 }
 
 datasource db {
-  provider  = "postgresql"
-
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
-model Todo {
+// ==================== ENUMS ====================
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  CASHIER
+  STEWARD
+  USER
+}
+
+enum SyncStatus {
+  ONLINE
+  OFFLINE
+  SYNCING
+}
+
+enum LicenseStatus {
+  ACTIVE
+  EXPIRED
+  REVOKED
+}
+
+enum SubscriptionPlan {
+  FREE
+  BASIC
+  PRO
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  TRIAL
+  ACTIVE
+  EXPIRED
+  CANCELLED
+}
+
+enum CategoryType {
+  FOOD
+  BEVERAGE
+  COMBO
+  DESSERT
+  SNACK
+  ALCOHOL
+  NON_ALCOHOLIC
+  SPECIAL
+  SEASONAL
+  CUSTOM
+  ADDON
+  INGREDIENT
+  SERVICE
+}
+
+enum DietaryType {
+  VEG
+  NON_VEG
+  VEGAN
+}
+
+enum Status {
+  ACTIVE
+  INACTIVE
+}
+
+enum VariationType {
+  SIZE
+  PORTION
+  QUANTITY
+  CUSTOM
+}
+
+enum InventoryType {
+  SPICES
+  MEAT
+  VEGETABLES
+  DAIRY
+  BEVERAGES
+  GRAINS
+  PACKAGED
+  GENERAL
+}
+
+enum Unit {
+  KG
+  G
+  MG
+  LTR
+  ML
+  PCS
+  PACK
+  BOTTLE
+  DOZEN
+  BOX
+}
+
+enum StorageLocation {
+  FRIDGE
+  FREEZER
+  DRY_STORAGE
+  PANTRY
+  COLD_STORAGE
+  COOLER
+  SHELF
+  DEFAULT
+}
+
+enum BatchSyncStatus {
+  PENDING
+  SYNCED
+}
+
+enum OrderType {
+  DINE_IN
+  TAKEAWAY
+  DELIVERY
+  ONLINE
+}
+
+enum OrderStatus {
+  DRAFT
+  RUNNING
+  PENDING_PAYMENT
+  PAID
+  COMPLETED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentMode {
+  CASH
+  UPI
+  CARD
+  SPLIT
+  DUE
+}
+
+enum KOTStatus {
+  PENDING
+  PREPARING
+  READY
+  SERVED
+  CANCELLED
+}
+
+// ==================== CORE MODELS ====================
+
+model User {
+  id            String         @id @default(cuid())
+  email         String         @unique
+  phone         String?        @unique
+  password      String
+  firstName     String
+  lastName      String
+  role          UserRole       @default(MANAGER)
+  avatar        String?
+  
+  addressLine1  String?
+  addressLine2  String?
+  city          String?
+  state         String?
+  postalCode    String?
+  country       String?        @default("IN")
+  
+  preferences   Json?
+  
+  restaurantId  String
+  restaurant    Restaurant     @relation(fields: [restaurantId], references: [id])
+  
+  lastLoginAt   DateTime?
+  sessionToken  String?        @unique
+  
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  
+  // Relations
+  licenses          License[]
+  loginHistory      LoginHistory[]
+  createdCategories Category[]     @relation("CategoryCreatedBy")
+  updatedCategories Category[]     @relation("CategoryUpdatedBy")
+  inventoryUpdates  InventoryItem[] @relation("InventoryLastUpdatedBy")
+  recipes           Recipe[]       @relation("RecipeLastUpdatedBy")
+  wastages          Wastage[]
+  orders            Order[]        @relation("OrderCreatedBy")
+  kotItems          KOTItem[]      @relation("KOTCreatedBy")
+  
+  @@index([restaurantId])
+  @@index([email])
+  @@index([role, restaurantId])
+  @@map("users")
+}
+
+model LoginHistory {
   id        String   @id @default(cuid())
-  title     String
-  completed Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  userId    String
+  ip        String?
+  userAgent String?
+  loginAt   DateTime @default(now())
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId, loginAt])
+  @@map("login_history")
 }
+
+model License {
+  id          String        @id @default(cuid())
+  userId      String
+  licenseKey  String        @unique
+  activatedAt DateTime      @default(now())
+  expiresAt   DateTime
+  status      LicenseStatus @default(ACTIVE)
+  
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("licenses")
+}
+
+model Restaurant {
+  id          String           @id @default(cuid())
+  name        String
+  slug        String           @unique
+  ownerId     String
+  phone       String?
+  email       String?
+  address     String?
+  city        String?
+  state       String?
+  country     String?          @default("IN")
+  
+  plan              SubscriptionPlan   @default(FREE)
+  subscriptionStatus SubscriptionStatus @default(TRIAL)
+  trialEndsAt       DateTime?
+  subscriptionEndsAt DateTime?
+  
+  maxDevices        Int              @default(1)
+  activeDevices     Int              @default(1)
+  
+  settings          Json?
+  
+  owner             User             @relation(fields: [ownerId], references: [id])
+  users             User[]
+  categories        Category[]
+  menuItems         MenuItem[]
+  addons            Addon[]
+  variations        Variation[]
+  inventoryItems    InventoryItem[]
+  orders            Order[]
+  kOTs              KOT[]
+  
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  
+  @@index([slug])
+  @@index([ownerId])
+  @@map("restaurants")
+}
+
+// ==================== MENU MODELS ====================
+
+model Category {
+  id          String       @id @default(cuid())
+  name        String
+  description String?
+  type        CategoryType
+  isActive    Boolean      @default(true)
+  sortOrder   Int          @default(0)
+  
+  restaurantId String
+  restaurant   Restaurant   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  
+  createdById String?
+  updatedById String?
+  
+  createdBy   User?        @relation("CategoryCreatedBy", fields: [createdById], references: [id])
+  updatedBy   User?        @relation("CategoryUpdatedBy", fields: [updatedById], references: [id])
+  
+  menuItems   MenuItem[]
+  
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  
+  @@unique([name, restaurantId])
+  @@index([restaurantId, isActive, sortOrder])
+  @@map("categories")
+}
+
+model MenuItem {
+  id           String      @id @default(cuid())
+  name         String
+  price        Float       @db.Decimal(10,2)
+  description  String?
+  dietary      DietaryType
+  image        String?
+  extraCharge  Float       @default(0) @db.Decimal(10,2)
+  tags         String[]
+  status       Status      @default(ACTIVE)
+  
+  categoryId   String
+  category     Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  
+  restaurantId String
+  restaurant   Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  
+  variations   MenuItemVariation[]
+  addons       MenuItemAddon[]
+  recipes      Recipe[]
+  orderItems   OrderItem[]
+  
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  
+  @@index([restaurantId, status])
+  @@index([categoryId])
+  @@index([restaurantId, dietary])
+  @@map("menu_items")
+}
+
+model Variation {
+  id           String        @id @default(cuid())
+  name         String
+  type         VariationType
+  price        Float         @default(0) @db.Decimal(10,2)
+  status       Status        @default(ACTIVE)
+  
+  restaurantId String
+  restaurant   Restaurant    @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  
+  menuItems    MenuItemVariation[]
+  orderItems   OrderItemVariation[]
+  
+  createdAt    DateTime      @default(now())
+  
+  @@unique([name, restaurantId])
+  @@index([restaurantId])
+  @@map("variations")
+}
+
+model MenuItemVariation {
+  id          String    @id @default(cuid())
+  menuItemId  String
+  variationId String
+  price       Float     @db.Decimal(10,2)
+  
+  menuItem    MenuItem  @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  variation   Variation @relation(fields: [variationId], references: [id], onDelete: Cascade)
+  
+  @@unique([menuItemId, variationId])
+  @@index([variationId])
+  @@map("menu_item_variations")
+}
+
+model Addon {
+  id           String      @id @default(cuid())
+  name         String
+  type         DietaryType
+  price        Float       @db.Decimal(10,2)
+  status       Status      @default(ACTIVE)
+  
+  restaurantId String
+  restaurant   Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  
+  menuItems    MenuItemAddon[]
+  orderItems   OrderItemAddon[]
+  
+  createdAt    DateTime    @default(now())
+  
+  @@unique([name, restaurantId])
+  @@index([restaurantId])
+  @@map("addons")
+}
+
+model MenuItemAddon {
+  id          String   @id @default(cuid())
+  menuItemId  String
+  addonId     String
+  
+  menuItem    MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  addon       Addon    @relation(fields: [addonId], references: [id], onDelete: Cascade)
+  
+  @@unique([menuItemId, addonId])
+  @@index([addonId])
+  @@map("menu_item_addons")
+}
+
+// ==================== ORDER MANAGEMENT (UNIFIED) ====================
+
+model Order {
+  id              String         @id @default(cuid())
+  orderNumber     String         @unique
+  billingNumber   String         @unique
+  status          OrderStatus    @default(DRAFT)
+  orderType       OrderType
+  
+  // Customer Information
+  customerName    String
+  customerPhone   String
+  customerEmail   String?
+  tableNumber     String?
+  deliveryAddress String?
+  
+  // Order Financials
+  subtotal        Float          @default(0) @db.Decimal(10,2)
+  taxAmount       Float          @default(0) @db.Decimal(10,2)
+  discountAmount  Float          @default(0) @db.Decimal(10,2)
+  serviceCharge   Float          @default(0) @db.Decimal(10,2)
+  total           Float          @default(0) @db.Decimal(10,2)
+  
+  // Payment Information
+  paymentMethod   PaymentMode?
+  paymentDetails  Payment?
+  
+  // Staff Information
+  stewardId       String?
+  steward         User?          @relation("OrderSteward", fields: [stewardId], references: [id])
+  createdById     String
+  createdBy       User           @relation("OrderCreatedBy", fields: [createdById], references: [id])
+  
+  // Kitchen Management
+  kotCount        Int            @default(0)
+  
+  // Offline Support
+  isOffline       Boolean        @default(false)
+  tempOrderId     String?
+  synced          Boolean        @default(false)
+  
+  // Multi-tenant
+  restaurantId    String
+  restaurant      Restaurant     @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  
+  // Relations
+  items           OrderItem[]
+  kots            KOT[]
+  
+  // Timestamps
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  completedAt     DateTime?
+  cancelledAt     DateTime?
+  refundedAt      DateTime?
+  
+  // Indexes for performance
+  @@index([status, createdAt])
+  @@index([billingNumber])
+  @@index([orderNumber])
+  @@index([customerPhone])
+  @@index([restaurantId, status])
+  @@index([createdAt(sort: Desc)])
+  @@index([stewardId, status])
+  @@index([orderType, status])
+  @@map("orders")
+}
+
+model OrderItem {
+  id          String      @id @default(cuid())
+  orderId     String
+  menuItemId  String
+  
+  // Snapshot of item details (to preserve historical data)
+  itemName    String
+  basePrice   Float       @db.Decimal(10,2)
+  quantity    Float
+  quantityUnit String     @default("unit")
+  total       Float       @db.Decimal(10,2)
+  perServingProfit Float  @default(0) @db.Decimal(10,2)
+  
+  // Relations
+  order       Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItem    MenuItem    @relation(fields: [menuItemId], references: [id])
+  
+  variation   OrderItemVariation?
+  addons      OrderItemAddon[]
+  batchesUsed BatchUsage[]
+  kotItems    KOTItem[]
+  
+  @@index([orderId])
+  @@index([menuItemId])
+  @@map("order_items")
+}
+
+model OrderItemVariation {
+  id          String    @id @default(cuid())
+  orderItemId String    @unique
+  variationId String
+  
+  name        String
+  price       Float     @db.Decimal(10,2)
+  
+  orderItem   OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  variation   Variation @relation(fields: [variationId], references: [id])
+  
+  @@index([variationId])
+  @@map("order_item_variations")
+}
+
+model OrderItemAddon {
+  id          String    @id @default(cuid())
+  orderItemId String
+  addonId     String
+  
+  name        String
+  price       Float     @db.Decimal(10,2)
+  
+  orderItem   OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  addon       Addon     @relation(fields: [addonId], references: [id])
+  
+  @@unique([orderItemId, addonId])
+  @@index([addonId])
+  @@map("order_item_addons")
+}
+
+model Payment {
+  id            String      @id @default(cuid())
+  orderId       String      @unique
+  
+  mode          PaymentMode
+  amountPaid    Float       @default(0) @db.Decimal(10,2)
+  returnAmount  Float       @default(0) @db.Decimal(10,2)
+  
+  // Split payment details
+  splitCash     Float?      @default(0) @db.Decimal(10,2)
+  splitUPI      Float?      @default(0) @db.Decimal(10,2)
+  splitCard     Float?      @default(0) @db.Decimal(10,2)
+  
+  // Due payment tracking
+  due           Float?      @default(0) @db.Decimal(10,2)
+  dueDate       DateTime?
+  duePaidAt     DateTime?
+  
+  // Transaction reference
+  transactionId String?
+  paymentIntent String?
+  
+  order         Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  
+  @@index([orderId])
+  @@index([mode, createdAt])
+  @@map("payments")
+}
+
+// ==================== KOT (Kitchen Order Ticket) ====================
+
+model KOT {
+  id             String      @id @default(cuid())
+  kotNumber      String      @unique
+  orderId        String
+  
+  status         KOTStatus   @default(PENDING)
+  priority       Int         @default(0)
+  notes          String?
+  
+  createdById    String
+  createdBy      User        @relation("KOTCreatedBy", fields: [createdById], references: [id])
+  
+  restaurantId   String
+  restaurant     Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  
+  order          Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  items          KOTItem[]
+  
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  completedAt    DateTime?
+  
+  @@index([kotNumber])
+  @@index([orderId])
+  @@index([status, createdAt])
+  @@index([restaurantId, status])
+  @@index([priority])
+  @@map("kots")
+}
+
+model KOTItem {
+  id          String      @id @default(cuid())
+  kotId       String
+  orderItemId String
+  
+  menuItemName String
+  quantity    Float
+  notes       String?
+  
+  status      KOTStatus   @default(PENDING)
+  
+  createdById String
+  createdBy   User        @relation("KOTCreatedBy", fields: [createdById], references: [id])
+  
+  kot         KOT         @relation(fields: [kotId], references: [id], onDelete: Cascade)
+  orderItem   OrderItem   @relation(fields: [orderItemId], references: [id])
+  
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  completedAt DateTime?
+  
+  @@index([kotId])
+  @@index([orderItemId])
+  @@index([status])
+  @@map("kot_items")
+}
+
+// ==================== INVENTORY MANAGEMENT ====================
+
+model InventoryItem {
+  id              String          @id @default(cuid())
+  name            String
+  type            InventoryType
+  unit            Unit
+  storageLocation StorageLocation
+  supplierName    String?
+  reorderLevel    Float          @default(0)
+  currentStock    Float          @default(0) @db.Decimal(10,3)
+  isActive        Boolean        @default(true)
+  
+  restaurantId    String
+  restaurant      Restaurant     @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  
+  lastUpdatedById String
+  lastUpdatedBy   User           @relation("InventoryLastUpdatedBy", fields: [lastUpdatedById], references: [id])
+  
+  batches         Batch[]
+  wastages        Wastage[]
+  recipeIngredients RecipeIngredient[]
+  batchUsages     BatchUsage[]
+  
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  
+  @@unique([name, restaurantId])
+  @@index([restaurantId, type, isActive])
+  @@index([restaurantId, reorderLevel])
+  @@index([type, currentStock])
+  @@map("inventory_items")
+}
+
+model Batch {
+  id           String          @id @default(cuid())
+  batchNumber  String          @unique
+  quantity     Float           @db.Decimal(10,3)
+  costPrice    Float           @db.Decimal(10,2)
+  purchaseDate DateTime?
+  expiryDate   DateTime?
+  syncStatus   BatchSyncStatus @default(PENDING)
+  
+  inventoryId  String
+  inventory    InventoryItem   @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+  
+  usages       BatchUsage[]
+  
+  @@index([inventoryId, expiryDate])
+  @@index([syncStatus])
+  @@index([expiryDate])
+  @@map("batches")
+}
+
+model BatchUsage {
+  id           String   @id @default(cuid())
+  batchId      String
+  orderItemId  String
+  quantityUsed Float    @db.Decimal(10,3)
+  
+  batch        Batch    @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  orderItem    OrderItem @relation(fields: [orderItemId], references: [id])
+  
+  usedAt       DateTime @default(now())
+  
+  @@unique([batchId, orderItemId])
+  @@index([batchId])
+  @@index([orderItemId])
+  @@index([usedAt])
+  @@map("batch_usages")
+}
+
+model Wastage {
+  id          String        @id @default(cuid())
+  quantity    Float         @db.Decimal(10,3)
+  reason      String?
+  date        DateTime      @default(now())
+  
+  userId      String
+  user        User          @relation(fields: [userId], references: [id])
+  
+  inventoryId String
+  inventory   InventoryItem @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+  
+  @@index([inventoryId, date])
+  @@index([userId, date])
+  @@map("wastages")
+}
+
+// ==================== RECIPE MANAGEMENT ====================
+
+model Recipe {
+  id              String            @id @default(cuid())
+  name            String
+  description     String?
+  perServingCost  Float             @default(0) @db.Decimal(10,2)
+  sellingPrice    Float?            @db.Decimal(10,2)
+  profitMargin    Float?            @db.Decimal(5,2)
+  notes           String?
+  isActive        Boolean           @default(true)
+  
+  menuItemId      String?
+  menuItem        MenuItem?         @relation(fields: [menuItemId], references: [id], onDelete: SetNull)
+  
+  category        InventoryType
+  vegType         DietaryType
+  
+  lastUpdatedById String?
+  lastUpdatedBy   User?             @relation("RecipeLastUpdatedBy", fields: [lastUpdatedById], references: [id])
+  
+  ingredients     RecipeIngredient[]
+  
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  
+  @@unique([name, menuItemId])
+  @@index([menuItemId])
+  @@index([isActive])
+  @@index([profitMargin])
+  @@map("recipes")
+}
+
+model RecipeIngredient {
+  id            String         @id @default(cuid())
+  quantity      Float          @db.Decimal(10,3)
+  unit          Unit
+  baseQuantity  Float?         @db.Decimal(10,3)
+  
+  recipeId      String
+  inventoryId   String
+  
+  recipe        Recipe         @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  inventory     InventoryItem  @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+  
+  @@unique([recipeId, inventoryId])
+  @@index([inventoryId])
+  @@map("recipe_ingredients")
+}
+
