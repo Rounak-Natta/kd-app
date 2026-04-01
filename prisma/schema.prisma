@@ -29,7 +29,7 @@ enum CategoryType {
 }
 
 //////////////////////////////////////////////////
-// MODELS
+// USER
 //////////////////////////////////////////////////
 
 model User {
@@ -50,15 +50,24 @@ model User {
   @@index([restaurantId, role])
 }
 
+//////////////////////////////////////////////////
+// RESTAURANT
+//////////////////////////////////////////////////
+
 model Restaurant {
   id         String     @id @default(cuid())
   name       String
 
   users      User[]
   categories Category[]
+  menuItems  MenuItem[]
 
   createdAt  DateTime @default(now())
 }
+
+//////////////////////////////////////////////////
+// CATEGORY
+//////////////////////////////////////////////////
 
 model Category {
   id           String       @id @default(cuid())
@@ -71,6 +80,8 @@ model Category {
   restaurantId String
   restaurant   Restaurant   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
 
+  menuItems    MenuItem[]   // ✅ correct placement
+
   createdById  String?
   updatedById  String?
 
@@ -82,4 +93,95 @@ model Category {
 
   @@unique([name, restaurantId])
   @@index([restaurantId, isActive, sortOrder])
+}
+
+//////////////////////////////////////////////////
+// MENU ITEM
+//////////////////////////////////////////////////
+
+model MenuItem {
+  id            String   @id @default(cuid())
+  name          String
+  description   String?
+
+  image         String?
+
+  isAvailable   Boolean  @default(true)
+  isVeg         Boolean  @default(false)
+  isDeleted     Boolean  @default(false)
+
+  basePrice     Float?
+
+  restaurantId  String
+  restaurant    Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  categoryId    String
+  category      Category   @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  variations    Variation[]
+  addonGroups   AddonGroup[]
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([restaurantId, categoryId, isAvailable])
+  @@index([restaurantId, name])
+}
+
+//////////////////////////////////////////////////
+// VARIATIONS
+//////////////////////////////////////////////////
+
+model Variation {
+  id          String  @id @default(cuid())
+  name        String
+  price       Float
+
+  sku         String?
+  isDefault   Boolean @default(false)
+
+  menuItemId  String
+  menuItem    MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+
+  @@index([menuItemId])
+}
+
+//////////////////////////////////////////////////
+// ADDON GROUP
+//////////////////////////////////////////////////
+
+model AddonGroup {
+  id          String  @id @default(cuid())
+  name        String
+
+  isRequired  Boolean @default(false)
+  maxSelect   Int?
+
+  menuItemId  String
+  menuItem    MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+
+  addons      Addon[]
+
+  createdAt   DateTime @default(now())
+
+  @@index([menuItemId])
+}
+
+//////////////////////////////////////////////////
+// ADDON (MISSING FIX)
+//////////////////////////////////////////////////
+
+model Addon {
+  id            String  @id @default(cuid())
+  name          String
+  price         Float
+
+  addonGroupId  String
+  addonGroup    AddonGroup @relation(fields: [addonGroupId], references: [id], onDelete: Cascade)
+
+  createdAt     DateTime @default(now())
+
+  @@index([addonGroupId])
 }
