@@ -1,15 +1,13 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, DM_Sans } from "next/font/google";
 import "./globals.css";
+import { cn } from "@/lib/utils";
 
 /* =========================
    🔤 FONTS
 ========================= */
 
-const fontSans = Geist({
-  subsets: ["latin"],
-  variable: "--font-sans",
-});
+const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 const fontMono = Geist_Mono({
   subsets: ["latin"],
@@ -92,7 +90,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${fontSans.variable} ${fontMono.variable} ${fontHeading.variable}`}
+      className={cn(fontMono.variable, fontHeading.variable, "font-sans", geist.variable)}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
