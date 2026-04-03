@@ -40,14 +40,14 @@ export default function Home() {
         <div className="flex justify-end">
           <button
             onClick={toggleTheme}
-            className="rounded-md border px-3 py-1 text-sm"
+            className="rounded-md border-base px-3 py-1 text-sm hover:bg-secondary"
           >
             {isDark ? "Light Mode" : "Dark Mode"}
           </button>
         </div>
 
-        {/* Logo / App Name */}
-        <h1 className="text-4xl font-bold tracking-tight">
+        {/* Logo */}
+        <h1 className="text-4xl font-bold tracking-tight text-primary">
           Kitchen Diaries
         </h1>
 
@@ -55,6 +55,13 @@ export default function Home() {
         <p className="text-muted-foreground">
           Smart restaurant management. Billing, inventory, analytics — all in one place.
         </p>
+
+        {/* CTA Button (THIS WILL SHOW YOUR BRAND 🔥) */}
+        <div className="pt-4">
+          <button className="bg-primary text-primary-foreground px-6 py-3 rounded-lg hover:bg-primary-hover transition">
+            Get Started
+          </button>
+        </div>
 
         {/* Coming Soon */}
         <div className="mt-10 space-y-3">

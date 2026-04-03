@@ -1,79 +1,98 @@
 @import "tailwindcss";
 
 /* =========================
-   🎨 DESIGN TOKENS
+   🎨 DESIGN TOKENS – LIGHT MODE (CLEAN & CRISP)
 ========================= */
 
 :root {
-  /* Fonts */
-  --font-sans: "Inter", "Poppins", system-ui, sans-serif;
-  --font-mono: "Roboto Mono", monospace;
-
-  /* Radius */
   --radius: 0.75rem;
 
-  /* Core Colors (HSL for Tailwind v4) */
-  --background: 0 0% 100%;
-  --foreground: 222 47% 11%;
+  --background: #f9fafb;
+  --foreground: #0a0f1a;
 
-  --primary: 24 95% 53%;
-  --primary-foreground: 0 0% 100%;
+  --card: #ffffff;
+  --card-foreground: #0a0f1a;
 
-  --secondary: 210 40% 96%;
-  --secondary-foreground: 222 47% 11%;
+  --secondary: #f1f4f9;
+  --secondary-foreground: #1e293b;
 
-  --muted: 210 40% 96%;
-  --muted-foreground: 215 16% 47%;
+  --muted: #f0f2f6;
+  --muted-foreground: #5b6e8c;
 
-  --border: 214 32% 91%;
+  --border: #e6edf4;
+  --input: #e6edf4;
+  --ring: #f97316;
 
-  /* Status */
-  --success: 142 71% 45%;
-  --danger: 0 84% 60%;
-  --warning: 45 93% 47%;
-  --info: 217 91% 60%;
+  --primary: #f97316;
+  --primary-hover: #ea580c;
+  --primary-foreground: #ffffff;
+
+  --success: #22c55e;
+  --danger: #ef4444;
+  --warning: #eab308;
+  --info: #3b82f6;
 }
 
 /* =========================
-   🌙 DARK MODE (class-based)
+   🌙 DARK MODE – COOL SLATE-BLUE (COMPLETELY DIFFERENT)
+   No warm tones – clean, modern, high contrast
 ========================= */
 
 .dark {
-  --background: 222 47% 11%;
-  --foreground: 210 40% 98%;
+  --background: #0a0c10;          /* deep slate – not black, not warm */
+  --foreground: #eceff4;
 
-  --secondary: 217 33% 17%;
-  --secondary-foreground: 210 40% 98%;
+  --card: #14181f;
+  --card-foreground: #eceff4;
 
-  --muted: 217 33% 17%;
-  --muted-foreground: 215 20% 65%;
+  --secondary: #1e2430;
+  --secondary-foreground: #d8dee9;
 
-  --border: 217 33% 17%;
+  --muted: #11161c;
+  --muted-foreground: #8a9bb0;
+
+  --border: #232a36;
+  --input: #232a36;
+
+  --primary: #f97316;             /* orange brand unchanged – pops beautifully on cool slate */
+  --primary-hover: #ffa15e;
+  --primary-foreground: #ffffff;
+
+  --success: #2ecc71;
+  --danger: #e74c3c;
+  --warning: #f1c40f;
+  --info: #5dade2;
 }
 
 /* =========================
-   🎯 THEME MAPPING (Tailwind v4)
+   🎯 TAILWIND v4 THEME
 ========================= */
 
-@theme inline {
-  --color-background: hsl(var(--background));
-  --color-foreground: hsl(var(--foreground));
+@theme {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
 
-  --color-primary: hsl(var(--primary));
-  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
 
-  --color-secondary: hsl(var(--secondary));
-  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
 
-  --color-muted: hsl(var(--muted));
-  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
 
-  --color-border: hsl(var(--border));
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
 
-  --color-success: hsl(var(--success));
-  --color-danger: hsl(var(--danger));
-  --color-warning: hsl(var(--warning));
-  --color-info: hsl(var(--info));
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-success: var(--success);
+  --color-danger: var(--danger);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
 
   --radius: var(--radius);
 }
@@ -83,45 +102,58 @@
 ========================= */
 
 @layer base {
-  * {
-    border-color: var(--color-border);
-  }
-
-  html, body {
-    background: var(--color-background);
-    color: var(--color-foreground);
-    font-family: var(--font-sans);
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+  html {
+    background: var(--background);
+    color: var(--foreground);
   }
 
   body {
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
   }
 
-  /* Typography */
-  h1 { font-size: 1.875rem; font-weight: 600; }
+  h1, h2, h3, h4 {
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    letter-spacing: -0.02em;
+  }
+
+  h1 { font-size: 2rem; font-weight: 600; }
   h2 { font-size: 1.5rem; font-weight: 600; }
   h3 { font-size: 1.25rem; font-weight: 600; }
   h4 { font-size: 1.125rem; font-weight: 500; }
 
   p {
-    color: var(--color-muted-foreground);
-    font-size: 0.875rem;
+    color: var(--muted-foreground);
+    font-size: 0.9rem;
+    line-height: 1.6;
   }
 
   a {
-    color: var(--color-primary);
-    transition: opacity 0.2s ease;
+    color: var(--primary);
+    transition: 0.2s ease;
   }
 
   a:hover {
-    opacity: 0.8;
+    color: var(--primary-hover);
   }
 
   button {
-    transition: all 0.2s ease;
     cursor: pointer;
+    font-weight: 500;
+    transition: 0.2s ease;
+  }
+
+  input, textarea {
+    background: transparent;
+    outline: none;
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  *:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+    border-radius: calc(var(--radius) * 0.5);
   }
 }
 
@@ -130,8 +162,29 @@
 ========================= */
 
 @layer utilities {
-  .text-success { color: var(--color-success); }
-  .text-danger { color: var(--color-danger); }
-  .text-warning { color: var(--color-warning); }
-  .text-info { color: var(--color-info); }
+  /* Backgrounds */
+  .bg-background { background: var(--background); }
+  .bg-card { background: var(--card); }
+  .bg-primary { background: var(--primary); }
+  .bg-primary-hover:hover { background: var(--primary-hover); }
+  .bg-secondary { background: var(--secondary); }
+  .bg-muted { background: var(--muted); }
+
+  /* Text colors */
+  .text-foreground { color: var(--foreground); }
+  .text-card-foreground { color: var(--card-foreground); }
+  .text-primary { color: var(--primary); }
+  .text-primary-foreground { color: var(--primary-foreground); }
+  .text-secondary-foreground { color: var(--secondary-foreground); }
+  .text-muted-foreground { color: var(--muted-foreground); }
+
+  /* Status text */
+  .text-success { color: var(--success); }
+  .text-danger { color: var(--danger); }
+  .text-warning { color: var(--warning); }
+  .text-info { color: var(--info); }
+
+  /* Borders & rings */
+  .border-base { border: 1px solid var(--border); }
+  .ring-focus { box-shadow: 0 0 0 2px var(--ring); }
 }

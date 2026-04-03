@@ -1,19 +1,29 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, DM_Sans } from "next/font/google";
 import "./globals.css";
 
+/* =========================
+   🔤 FONTS
+========================= */
+
 const fontSans = Geist({
-  variable: "--font-sans",
   subsets: ["latin"],
+  variable: "--font-sans",
 });
 
 const fontMono = Geist_Mono({
-  variable: "--font-mono",
   subsets: ["latin"],
+  variable: "--font-mono",
+});
+
+const fontHeading = DM_Sans({
+  subsets: ["latin"],
+  variable: "--font-heading",
+  weight: ["400", "500", "600", "700"],
 });
 
 /* =========================
-   📌 METADATA (SEO READY)
+   📌 METADATA
 ========================= */
 
 export const metadata: Metadata = {
@@ -35,8 +45,9 @@ export const metadata: Metadata = {
   ],
 
   authors: [{ name: "Kitchen Diaries Team" }],
-
   creator: "Kitchen Diaries",
+
+  metadataBase: new URL("https://kitchendiaries.app"),
 
   openGraph: {
     title: "Kitchen Diaries",
@@ -47,9 +58,26 @@ export const metadata: Metadata = {
     locale: "en_IN",
     type: "website",
   },
-
-  metadataBase: new URL("https://kitchendiaries.app"),
 };
+
+/* =========================
+   🌙 THEME INIT (NO FLICKER)
+========================= */
+
+const themeScript = `
+(function () {
+  try {
+    const stored = localStorage.getItem("theme");
+    const system = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    const theme = stored || system;
+    if (theme === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  } catch (e) {}
+})();
+`;
 
 /* =========================
    🧱 ROOT LAYOUT
@@ -64,8 +92,12 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${fontSans.variable} ${fontMono.variable}`}
+      className={`${fontSans.variable} ${fontMono.variable} ${fontHeading.variable}`}
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
+
       <body className="min-h-screen bg-background text-foreground antialiased">
         {children}
       </body>
