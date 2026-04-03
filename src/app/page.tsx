@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
   const [isDark, setIsDark] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     const root = document.documentElement;
@@ -36,8 +38,18 @@ export default function Home() {
     <main className="flex min-h-screen items-center justify-center bg-background text-foreground px-6">
       <div className="w-full max-w-xl text-center space-y-6">
 
-        {/* Theme Toggle */}
-        <div className="flex justify-end">
+        {/* Top Actions */}
+        <div className="flex justify-between items-center">
+
+          {/* Login Button */}
+          <button
+            onClick={() => router.push("/login")}
+            className="text-sm text-primary hover:underline"
+          >
+            Login
+          </button>
+
+          {/* Theme Toggle */}
           <button
             onClick={toggleTheme}
             className="rounded-md border-base px-3 py-1 text-sm hover:bg-secondary"
@@ -56,9 +68,12 @@ export default function Home() {
           Smart restaurant management. Billing, inventory, analytics — all in one place.
         </p>
 
-        {/* CTA Button (THIS WILL SHOW YOUR BRAND 🔥) */}
+        {/* CTA Button */}
         <div className="pt-4">
-          <button className="bg-primary text-primary-foreground px-6 py-3 rounded-lg hover:bg-primary-hover transition">
+          <button
+            onClick={() => router.push("/login")}
+            className="bg-primary text-primary-foreground px-6 py-3 rounded-lg hover:bg-primary-hover transition"
+          >
             Get Started
           </button>
         </div>
