@@ -3,6 +3,18 @@ import type { NextRequest } from "next/server";
 import { verifyToken } from "./src/lib/auth";
 
 export function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl;
+
+  // ✅ PUBLIC ROUTES (DO NOT BLOCK)
+  if (
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/api/auth") ||
+    pathname.startsWith("/_next") ||
+    pathname.includes(".")
+  ) {
+    return NextResponse.next();
+  }
+
   const token = req.cookies.get("token")?.value;
 
   // ❌ Not logged in
@@ -12,8 +24,6 @@ export function middleware(req: NextRequest) {
 
   try {
     const user = verifyToken(token) as any;
-
-    const { pathname } = req.nextUrl;
 
     // 🔥 ROLE-BASED ACCESS
 

@@ -18,14 +18,14 @@ export default function LoginPage() {
 
     const form = new FormData(e.currentTarget);
 
-    const email = form.get("email");
+    const email = form.get("email")?.toString().toLowerCase();
     const password = form.get("password");
 
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json", // ✅ important
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ email, password }),
       });
@@ -34,7 +34,6 @@ export default function LoginPage() {
 
       if (!res.ok) {
         alert(data.error || "Login failed");
-        setLoading(false);
         return;
       }
 
@@ -49,7 +48,8 @@ export default function LoginPage() {
 
     } catch (err) {
       alert("Something went wrong");
-      setLoading(false);
+    } finally {
+      setLoading(false); // ✅ FIX
     }
   };
 
@@ -58,7 +58,6 @@ export default function LoginPage() {
       <Card className="w-full max-w-md shadow-xl border-base">
         <CardContent className="p-8 space-y-6">
 
-          {/* Header */}
           <div className="space-y-2 text-center">
             <h1 className="text-2xl font-semibold">Welcome back</h1>
             <p className="text-muted-foreground text-sm">
@@ -66,27 +65,24 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {/* Form */}
           <form onSubmit={handleLogin} className="space-y-5">
 
-            {/* Email */}
             <div className="space-y-2">
               <Label>Email</Label>
               <Input
-                name="email" // ✅ REQUIRED
+                name="email"
                 type="email"
                 placeholder="you@example.com"
                 required
               />
             </div>
 
-            {/* Password */}
             <div className="space-y-2">
               <Label>Password</Label>
 
               <div className="relative">
                 <Input
-                  name="password" // ✅ REQUIRED
+                  name="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="Enter password"
                   required
@@ -102,7 +98,6 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Submit */}
             <Button
               type="submit"
               className="w-full bg-primary text-primary-foreground hover:bg-primary-hover"
@@ -119,7 +114,6 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          {/* Footer */}
           <p className="text-center text-sm text-muted-foreground">
             Forgot password?{" "}
             <span className="text-primary cursor-pointer hover:underline">

@@ -5,20 +5,24 @@ import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   try {
-    const { email, password } = await req.json();
+    const body = await req.json();
 
-    // 🔍 DEBUG LOGS
-    console.log("👉 EMAIL:", email);
-    console.log("👉 PASSWORD:", password);
+    const email = body.email?.toString().toLowerCase();
+    const password = body.password;
+
+    // ✅ VALIDATION
+    if (!email || !password) {
+      return NextResponse.json(
+        { error: "Email and password are required" },
+        { status: 400 }
+      );
+    }
 
     const user = await prisma.user.findUnique({
       where: { email },
     });
 
-    console.log("👉 USER FROM DB:", user);
-
     if (!user) {
-      console.log("❌ USER NOT FOUND");
       return NextResponse.json(
         { error: "Invalid credentials" },
         { status: 401 }
@@ -27,10 +31,7 @@ export async function POST(req: Request) {
 
     const isValid = await compare(password, user.password);
 
-    console.log("👉 PASSWORD MATCH:", isValid);
-
     if (!isValid) {
-      console.log("❌ PASSWORD WRONG");
       return NextResponse.json(
         { error: "Invalid credentials" },
         { status: 401 }
@@ -47,21 +48,22 @@ export async function POST(req: Request) {
       role: user.role,
     });
 
+    // ✅ COOKIE WITH EXPIRY
     res.cookies.set("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // ✅ FIXED
+      secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
       path: "/",
+      maxAge: 60 * 60 * 24 * 7, // 7 days
     });
-
-    console.log("✅ LOGIN SUCCESS");
 
     return res;
 
   } catch (err) {
-    console.log("🔥 ERROR:", err);
+    console.error("🔥 LOGIN ERROR:", err);
+
     return NextResponse.json(
-      { error: "Login failed" },
+      { error: "Something went wrong" },
       { status: 500 }
     );
   }
