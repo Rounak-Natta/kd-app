@@ -11,7 +11,7 @@ export async function requirePermission(permission: string) {
     throw new Error("FORBIDDEN");
   }
 
-  // ADMIN shortcut
+  // ADMIN full access
   if (permissions.includes("*")) {
     return user;
   }

@@ -9,12 +9,9 @@ export default async function WaiterLayout({
 }) {
   const user = await getCurrentUser();
 
+  // ✅ ONLY AUTH CHECK
   if (!user) {
     redirect("/login");
-  }
-
-  if (user.role !== "STEWARD") {
-    redirect("/unauthorized");
   }
 
   return (
