@@ -1,18 +1,23 @@
-// src/app/api/test/route.ts
-import { prisma } from "@/lib/prisma";
-import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
+import { verifyToken } from "@/lib/auth";
 
-export async function GET() {
+type AuthUser = {
+  id: string;
+  role: string;
+  restaurantId: string;
+};
+
+export async function getCurrentUser(): Promise<AuthUser | null> {
+  const cookieStore = await cookies(); // ✅ FIX
+
+  const token = cookieStore.get("token")?.value;
+
+  if (!token) return null;
+
   try {
-    await prisma.$connect();
-
-    return NextResponse.json({
-      message: "DB Connected ✅",
-    });
-  } catch (error) {
-    return NextResponse.json(
-      { error: "DB connection failed ❌" },
-      { status: 500 }
-    );
+    const user = verifyToken(token) as AuthUser;
+    return user;
+  } catch {
+    return null;
   }
 }

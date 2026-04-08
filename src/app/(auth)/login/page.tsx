@@ -12,15 +12,45 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
 
-    // 🔥 simulate API
-    setTimeout(() => {
+    const form = new FormData(e.currentTarget);
+
+    const email = form.get("email");
+    const password = form.get("password");
+
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json", // ✅ important
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || "Login failed");
+        setLoading(false);
+        return;
+      }
+
+      // 🔥 ROLE-BASED REDIRECT
+      if (data.role === "ADMIN") {
+        window.location.href = "/admin";
+      } else if (data.role === "STEWARD") {
+        window.location.href = "/waiter";
+      } else {
+        window.location.href = "/dashboard";
+      }
+
+    } catch (err) {
+      alert("Something went wrong");
       setLoading(false);
-      alert("Login successful (mock)");
-    }, 1500);
+    }
   };
 
   return (
@@ -43,6 +73,7 @@ export default function LoginPage() {
             <div className="space-y-2">
               <Label>Email</Label>
               <Input
+                name="email" // ✅ REQUIRED
                 type="email"
                 placeholder="you@example.com"
                 required
@@ -55,6 +86,7 @@ export default function LoginPage() {
 
               <div className="relative">
                 <Input
+                  name="password" // ✅ REQUIRED
                   type={showPassword ? "text" : "password"}
                   placeholder="Enter password"
                   required
@@ -94,6 +126,7 @@ export default function LoginPage() {
               Reset
             </span>
           </p>
+
         </CardContent>
       </Card>
     </main>
