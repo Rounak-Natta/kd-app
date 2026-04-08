@@ -2,18 +2,18 @@ import { prisma } from "@/lib/prisma";
 import { compare } from "bcryptjs";
 import { signToken } from "@/lib/auth";
 import { NextResponse } from "next/server";
+import { ROLE_ROUTES } from "@/lib/rbac";
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    const email = body.email?.toString().toLowerCase();
+    const email = body.email?.toLowerCase();
     const password = body.password;
 
-    // ✅ VALIDATION
     if (!email || !password) {
       return NextResponse.json(
-        { error: "Email and password are required" },
+        { error: "Email and password required" },
         { status: 400 }
       );
     }
@@ -44,26 +44,29 @@ export async function POST(req: Request) {
       restaurantId: user.restaurantId,
     });
 
+    const redirectTo =
+      ROLE_ROUTES[user.role as keyof typeof ROLE_ROUTES] || "/admin";
+
     const res = NextResponse.json({
       role: user.role,
+      redirectTo, // 🔥 IMPORTANT
     });
 
-    // ✅ COOKIE WITH EXPIRY
     res.cookies.set("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
       path: "/",
-      maxAge: 60 * 60 * 24 * 7, // 7 days
+      maxAge: 60 * 60 * 24 * 7,
     });
 
     return res;
 
   } catch (err) {
-    console.error("🔥 LOGIN ERROR:", err);
+    console.error(err);
 
     return NextResponse.json(
-      { error: "Something went wrong" },
+      { error: "Login failed" },
       { status: 500 }
     );
   }

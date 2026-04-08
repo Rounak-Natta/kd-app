@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { verifyToken } from "./src/lib/auth";
+import { verifyToken } from "@/lib/auth";
 
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // ✅ PUBLIC ROUTES (DO NOT BLOCK)
+  console.log("🔥 PROXY HIT:", pathname);
+
+  // ✅ Public routes
   if (
     pathname.startsWith("/login") ||
     pathname.startsWith("/api/auth") ||
@@ -17,7 +19,6 @@ export function middleware(req: NextRequest) {
 
   const token = req.cookies.get("token")?.value;
 
-  // ❌ Not logged in
   if (!token) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
@@ -25,21 +26,20 @@ export function middleware(req: NextRequest) {
   try {
     const user = verifyToken(token) as any;
 
-    // 🔥 ROLE-BASED ACCESS
+    console.log("👉 ROLE:", user.role);
 
-    // Admin routes
+    // 🔥 STRICT RBAC
+
     if (pathname.startsWith("/admin") && user.role !== "ADMIN") {
       return NextResponse.redirect(new URL("/unauthorized", req.url));
     }
 
-    // Waiter routes
     if (pathname.startsWith("/waiter") && user.role !== "STEWARD") {
       return NextResponse.redirect(new URL("/unauthorized", req.url));
     }
 
-    // Optional: redirect logged-in users away from login
-    if (pathname === "/login") {
-      return NextResponse.redirect(new URL("/dashboard", req.url));
+    if (pathname.startsWith("/pos") && user.role !== "CASHIER") {
+      return NextResponse.redirect(new URL("/unauthorized", req.url));
     }
 
     return NextResponse.next();
@@ -48,3 +48,7 @@ export function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 }
+
+export const config = {
+  matcher: ["/:path*"],
+};

@@ -11,10 +11,15 @@ import { Label } from "@/components/ui/label";
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    if (loading) return; // ✅ prevent double submit
+
     setLoading(true);
+    setError(null);
 
     const form = new FormData(e.currentTarget);
 
@@ -33,23 +38,21 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        alert(data.error || "Login failed");
+        setError(data.error || "Invalid credentials");
         return;
       }
 
-      // 🔥 ROLE-BASED REDIRECT
-      if (data.role === "ADMIN") {
-        window.location.href = "/admin";
-      } else if (data.role === "STEWARD") {
-        window.location.href = "/waiter";
+      // ✅ RBAC-based redirect (from backend)
+      if (data.redirectTo) {
+        window.location.href = data.redirectTo;
       } else {
-        window.location.href = "/dashboard";
+        window.location.href = "/login"; // fallback
       }
 
     } catch (err) {
-      alert("Something went wrong");
+      setError("Something went wrong. Please try again.");
     } finally {
-      setLoading(false); // ✅ FIX
+      setLoading(false);
     }
   };
 
@@ -58,6 +61,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-md shadow-xl border-base">
         <CardContent className="p-8 space-y-6">
 
+          {/* Header */}
           <div className="space-y-2 text-center">
             <h1 className="text-2xl font-semibold">Welcome back</h1>
             <p className="text-muted-foreground text-sm">
@@ -65,8 +69,17 @@ export default function LoginPage() {
             </p>
           </div>
 
+          {/* Error Message */}
+          {error && (
+            <div className="text-sm text-red-500 text-center">
+              {error}
+            </div>
+          )}
+
+          {/* Form */}
           <form onSubmit={handleLogin} className="space-y-5">
 
+            {/* Email */}
             <div className="space-y-2">
               <Label>Email</Label>
               <Input
@@ -77,6 +90,7 @@ export default function LoginPage() {
               />
             </div>
 
+            {/* Password */}
             <div className="space-y-2">
               <Label>Password</Label>
 
@@ -93,11 +107,16 @@ export default function LoginPage() {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
                 >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  {showPassword ? (
+                    <EyeOff size={18} />
+                  ) : (
+                    <Eye size={18} />
+                  )}
                 </button>
               </div>
             </div>
 
+            {/* Submit */}
             <Button
               type="submit"
               className="w-full bg-primary text-primary-foreground hover:bg-primary-hover"
@@ -114,6 +133,7 @@ export default function LoginPage() {
             </Button>
           </form>
 
+          {/* Footer */}
           <p className="text-center text-sm text-muted-foreground">
             Forgot password?{" "}
             <span className="text-primary cursor-pointer hover:underline">

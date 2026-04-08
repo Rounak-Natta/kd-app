@@ -1,23 +1,24 @@
-import { cookies } from "next/headers";
-import { verifyToken } from "@/lib/auth";
+import { NextResponse } from "next/server";
+import { requirePermission } from "@/lib/requirePermission";
 
-type AuthUser = {
-  id: string;
-  role: string;
-  restaurantId: string;
-};
-
-export async function getCurrentUser(): Promise<AuthUser | null> {
-  const cookieStore = await cookies(); // ✅ FIX
-
-  const token = cookieStore.get("token")?.value;
-
-  if (!token) return null;
-
+export async function GET() {
   try {
-    const user = verifyToken(token) as AuthUser;
-    return user;
-  } catch {
-    return null;
+    const user = await requirePermission("menu.write");
+
+    return NextResponse.json({
+      message: "You are allowed",
+      role: user.role,
+    });
+
+  } catch (err: any) {
+    if (err.message === "UNAUTHORIZED") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    if (err.message === "FORBIDDEN") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
