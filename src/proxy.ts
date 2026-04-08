@@ -5,7 +5,6 @@ import { verifyToken } from "@/lib/auth";
 export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  console.log("🔥 PROXY HIT:", pathname);
 
   // ✅ Public routes
   if (
@@ -26,7 +25,6 @@ export function proxy(req: NextRequest) {
   try {
     const user = verifyToken(token) as any;
 
-    console.log("👉 ROLE:", user.role);
 
     // 🔥 STRICT RBAC
 

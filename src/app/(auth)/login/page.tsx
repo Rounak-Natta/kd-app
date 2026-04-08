@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 
 export default function LoginPage() {
+  const router = useRouter();
+
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -16,7 +19,7 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (loading) return; // ✅ prevent double submit
+    if (loading) return;
 
     setLoading(true);
     setError(null);
@@ -42,12 +45,8 @@ export default function LoginPage() {
         return;
       }
 
-      // ✅ RBAC-based redirect (from backend)
-      if (data.redirectTo) {
-        window.location.href = data.redirectTo;
-      } else {
-        window.location.href = "/login"; // fallback
-      }
+      // ✅ RBAC redirect
+      router.replace(data.redirectTo);
 
     } catch (err) {
       setError("Something went wrong. Please try again.");
@@ -62,14 +61,14 @@ export default function LoginPage() {
         <CardContent className="p-8 space-y-6">
 
           {/* Header */}
-          <div className="space-y-2 text-center">
+          <div className="text-center space-y-2">
             <h1 className="text-2xl font-semibold">Welcome back</h1>
-            <p className="text-muted-foreground text-sm">
+            <p className="text-sm text-muted-foreground">
               Login to your Kitchen Diaries account
             </p>
           </div>
 
-          {/* Error Message */}
+          {/* Error */}
           {error && (
             <div className="text-sm text-red-500 text-center">
               {error}
@@ -104,7 +103,7 @@ export default function LoginPage() {
 
                 <button
                   type="button"
-                  onClick={() => setShowPassword(!showPassword)}
+                  onClick={() => setShowPassword((prev) => !prev)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
                 >
                   {showPassword ? (
@@ -119,7 +118,7 @@ export default function LoginPage() {
             {/* Submit */}
             <Button
               type="submit"
-              className="w-full bg-primary text-primary-foreground hover:bg-primary-hover"
+              className="w-full"
               disabled={loading}
             >
               {loading ? (
@@ -131,6 +130,7 @@ export default function LoginPage() {
                 "Login"
               )}
             </Button>
+
           </form>
 
           {/* Footer */}
